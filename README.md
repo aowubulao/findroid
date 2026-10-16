@@ -10,7 +10,13 @@
 
 Findroid is third-party Android application for Jellyfin that provides a native user interface to browse and play movies and series.
 
-Findroid requires Jellyfin server version 12.0 or higher.
+This fork targets **Jellyfin Server 10.10.x**, including **10.10.7**, while retaining the current Findroid UI and player.
+
+It uses Jellyfin Kotlin SDK **1.7.1** (minimum server version 10.10.0; recommended 10.10.7). SDK 1.8+ requires newer servers, so keep the SDK on the 1.7 release line when updating dependencies. Compatibility with newer server releases is not verified.
+
+Compatibility builds use the version suffix `-jf10.10`. Build the phone APKs with `./gradlew :app:phone:assembleLibreDebug`, or both phone and TV APKs with `./gradlew assembleDebug`. Debug builds use a separate application ID and can be installed alongside the official release.
+
+See the [compatibility notes and verification checklist](docs/jellyfin-10.10-compatibility.md) before using or updating this fork.
 
 I am developing this application in my spare time.
 

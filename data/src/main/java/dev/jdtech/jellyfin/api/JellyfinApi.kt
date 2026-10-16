@@ -7,21 +7,22 @@ import java.util.UUID
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import org.jellyfin.sdk.api.client.HttpClientOptions
-import org.jellyfin.sdk.api.client.extensions.authenticationApi
 import org.jellyfin.sdk.api.client.extensions.brandingApi
-import org.jellyfin.sdk.api.client.extensions.deviceApi
-import org.jellyfin.sdk.api.client.extensions.libraryApi
+import org.jellyfin.sdk.api.client.extensions.devicesApi
+import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.mediaInfoApi
-import org.jellyfin.sdk.api.client.extensions.mediaSegmentApi
+import org.jellyfin.sdk.api.client.extensions.mediaSegmentsApi
+import org.jellyfin.sdk.api.client.extensions.playStateApi
+import org.jellyfin.sdk.api.client.extensions.quickConnectApi
 import org.jellyfin.sdk.api.client.extensions.sessionApi
-import org.jellyfin.sdk.api.client.extensions.showApi
-import org.jellyfin.sdk.api.client.extensions.suggestionApi
+import org.jellyfin.sdk.api.client.extensions.suggestionsApi
 import org.jellyfin.sdk.api.client.extensions.systemApi
-import org.jellyfin.sdk.api.client.extensions.trickPlayApi
+import org.jellyfin.sdk.api.client.extensions.trickplayApi
+import org.jellyfin.sdk.api.client.extensions.tvShowsApi
 import org.jellyfin.sdk.api.client.extensions.userApi
-import org.jellyfin.sdk.api.client.extensions.userDataApi
-import org.jellyfin.sdk.api.client.extensions.userViewApi
-import org.jellyfin.sdk.api.client.extensions.videoApi
+import org.jellyfin.sdk.api.client.extensions.userLibraryApi
+import org.jellyfin.sdk.api.client.extensions.userViewsApi
+import org.jellyfin.sdk.api.client.extensions.videosApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 
@@ -61,20 +62,21 @@ class JellyfinApi(
     var userId: UUID? = null
 
     val brandingApi = api.brandingApi
-    val authenticationApi = api.authenticationApi
-    val deviceApi = api.deviceApi
-    val libraryApi = api.libraryApi
+    val devicesApi = api.devicesApi
+    val itemsApi = api.itemsApi
     val mediaInfoApi = api.mediaInfoApi
-    val mediaSegmentApi = api.mediaSegmentApi
+    val mediaSegmentsApi = api.mediaSegmentsApi
+    val playStateApi = api.playStateApi
+    val quickConnectApi = api.quickConnectApi
     val sessionApi = api.sessionApi
-    val showApi = api.showApi
-    val suggestionApi = api.suggestionApi
+    val showsApi = api.tvShowsApi
+    val suggestionsApi = api.suggestionsApi
     val systemApi = api.systemApi
-    val trickPlayApi = api.trickPlayApi
+    val trickplayApi = api.trickplayApi
     val userApi = api.userApi
-    val userDataApi = api.userDataApi
-    val videoApi = api.videoApi
-    val userViewApi = api.userViewApi
+    val userLibraryApi = api.userLibraryApi
+    val videosApi = api.videosApi
+    val viewsApi = api.userViewsApi
 
     companion object {
         @Volatile private var INSTANCE: JellyfinApi? = null

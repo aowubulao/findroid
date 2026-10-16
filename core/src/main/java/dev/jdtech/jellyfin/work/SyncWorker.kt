@@ -74,7 +74,7 @@ constructor(
             val userData = database.getUserDataToBeSynced(user.id, item.id) ?: continue
 
             try {
-                jellyfinApi.userDataApi.updateItemUserData(
+                jellyfinApi.itemsApi.updateItemUserData(
                     itemId = item.id,
                     userId = user.id,
                     data =

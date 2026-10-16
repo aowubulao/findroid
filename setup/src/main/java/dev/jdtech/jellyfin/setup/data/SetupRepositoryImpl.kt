@@ -51,16 +51,14 @@ class SetupRepositoryImpl(
     }
 
     override suspend fun getIsQuickConnectEnabled(): Boolean =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.authenticationApi.getQuickConnectEnabled().content
-        }
+        withContext(Dispatchers.IO) { jellyfinApi.quickConnectApi.getQuickConnectEnabled().content }
 
     override suspend fun initiateQuickConnect(): QuickConnectResult =
-        withContext(Dispatchers.IO) { jellyfinApi.authenticationApi.initiateQuickConnect().content }
+        withContext(Dispatchers.IO) { jellyfinApi.quickConnectApi.initiateQuickConnect().content }
 
     override suspend fun getQuickConnectState(secret: String): QuickConnectResult =
         withContext(Dispatchers.IO) {
-            jellyfinApi.authenticationApi.getQuickConnectState(secret).content
+            jellyfinApi.quickConnectApi.getQuickConnectState(secret).content
         }
 
     override suspend fun setCurrentServer(serverId: String) {
@@ -213,7 +211,7 @@ class SetupRepositoryImpl(
     override suspend fun login(username: String, password: String) {
         withContext(Dispatchers.IO) {
             val authenticationResult by
-                jellyfinApi.authenticationApi.authenticateUserByName(
+                jellyfinApi.userApi.authenticateUserByName(
                     data = AuthenticateUserByName(username = username, pw = password)
                 )
 
@@ -224,7 +222,7 @@ class SetupRepositoryImpl(
     override suspend fun loginWithSecret(secret: String) {
         withContext(Dispatchers.IO) {
             val authenticationResult by
-                jellyfinApi.authenticationApi.authenticateWithQuickConnect(
+                jellyfinApi.userApi.authenticateWithQuickConnect(
                     data = QuickConnectDto(secret = secret)
                 )
 

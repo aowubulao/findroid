@@ -10,7 +10,6 @@ import dev.jdtech.jellyfin.models.VideoMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.VideoRangeType
 
 object VideoMetadataParser {
     suspend fun parse(source: FindroidSource): VideoMetadata {
@@ -74,20 +73,9 @@ object VideoMetadataParser {
                              * Match dynamic range from
                              * [org.jellyfin.sdk.model.api.MediaStream.videoRangeType]
                              */
-                            when (videoRangeType) {
-                                VideoRangeType.SDR -> DisplayProfile.SDR
-                                VideoRangeType.HDR10 -> DisplayProfile.HDR10
-                                VideoRangeType.HDR10_PLUS -> DisplayProfile.HDR10_PLUS
-                                VideoRangeType.HLG -> DisplayProfile.HLG
-                                VideoRangeType.DOVI,
-                                VideoRangeType.DOVI_WITH_EL,
-                                VideoRangeType.DOVI_WITH_ELHDR10_PLUS,
-                                VideoRangeType.DOVI_WITH_HLG,
-                                VideoRangeType.DOVI_WITH_SDR,
-                                VideoRangeType.DOVI_WITH_HDR10,
-                                VideoRangeType.DOVI_WITH_HDR10_PLUS -> DisplayProfile.DOLBY_VISION
-                                else -> null
-                            }?.let { displayProfiles.add(it) }
+                            parseDisplayProfile(videoRangeType, videoDoViTitle)?.let {
+                                displayProfiles.add(it)
+                            }
 
                             /**
                              * Force stream [org.jellyfin.sdk.model.api.MediaStream.height] and

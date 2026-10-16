@@ -10,6 +10,13 @@
   ],
   "packageRules": [
     {
+      "description": "Keep Jellyfin Server 10.10 compatibility",
+      "matchPackageNames": [
+        "org.jellyfin.sdk:*"
+      ],
+      "allowedVersions": ">=1.7.1 <1.8.0"
+    },
+    {
       "groupName": "kotlin",
       "matchPackageNames": [
         "/org.jetbrains.kotlin.*/",
