@@ -1,7 +1,9 @@
 plugins {
-	`kotlin-dsl`
+    `kotlin-dsl`
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
+
+dependencies { testImplementation("junit:junit:4.13.2") }

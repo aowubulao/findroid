@@ -26,6 +26,8 @@ android {
     buildTypes {
         named("debug") { applicationIdSuffix = ".debug" }
         named("release") {
+            applicationIdSuffix = ".compat"
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -75,6 +77,27 @@ android {
         // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
+}
+
+androidComponents.finalizeDsl { extension ->
+    val release = extension.buildTypes.getByName("release")
+    val validation =
+        tasks.register<VerifyCompatibilityRelease>("verifyCompatibilityRelease") {
+            applicationId.set(extension.defaultConfig.applicationId + release.applicationIdSuffix)
+            versionName.set(extension.defaultConfig.versionName)
+            versionCode.set(extension.defaultConfig.versionCode)
+            debuggable.set(release.isDebuggable)
+            minifyEnabled.set(release.isMinifyEnabled)
+            shrinkResources.set(release.isShrinkResources)
+            hasSigningConfig.set(
+                release.signingConfig != null ||
+                    extension.defaultConfig.signingConfig != null ||
+                    extension.productFlavors.any { it.signingConfig != null }
+            )
+        }
+    tasks
+        .matching { it.name.matches(Regex("pre.*ReleaseBuild")) }
+        .configureEach { dependsOn(validation) }
 }
 
 dependencies {

@@ -14,7 +14,9 @@ This fork targets **Jellyfin Server 10.10.x**, including **10.10.7**, while reta
 
 It uses Jellyfin Kotlin SDK **1.7.1** (minimum server version 10.10.0; recommended 10.10.7). SDK 1.8+ requires newer servers, so keep the SDK on the 1.7 release line when updating dependencies. Compatibility with newer server releases is not verified.
 
-Compatibility builds use `<upstream version>-jf10.10-<compatibility revision>`, currently **1.1.0-jf10.10-1.0**. Compatibility-only updates increment the final revision (`1.1`, `1.2`, …). After integrating the latest upstream `master`, use its official version and reset the compatibility revision to `1.0`. Android's numeric `versionCode` continues increasing even when the compatibility revision resets.
+Compatibility builds use `<upstream version>-jf10.10-<compatibility revision>`, currently **1.1.0-jf10.10-1.1**. Compatibility-only updates increment the final revision (`1.1`, `1.2`, …). After integrating the latest upstream `master`, use its official version and reset the compatibility revision to `1.0`. Android's numeric `versionCode` continues increasing even when the compatibility revision resets.
+
+**Independent signed Release:** `dev.jdtech.jellyfin.compat`, version code `35`, display name **Findroid**. This optimized, non-debuggable build uses a dedicated compatibility signing key. It installs alongside the official app and existing Debug preview; it cannot update either one and requires a fresh sign-in. Phone and TV packages are alternatives with the same application ID, so install the appropriate one on each device. See the [Release build and signing instructions](docs/jellyfin-10.10-compatibility.md#independent-signed-release).
 
 Build the phone APKs with `./gradlew :app:phone:assembleLibreDebug`, or both phone and TV APKs with `./gradlew assembleDebug`. Debug builds use a separate application ID and can be installed alongside the official release.
 
