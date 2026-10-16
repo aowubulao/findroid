@@ -8,7 +8,15 @@ This branch keeps Findroid's current UI and players and targets Jellyfin Server 
 - Server discovery keeps the SDK's normal compatibility checks. This branch does not bypass version validation.
 - API calls use the 10.10-era endpoint groups for authentication, Quick Connect, libraries, playback reporting, favorites, watched state, media segments, trickplay, devices, and offline user-data sync.
 - Trickplay uses the SDK's `TrickplayInfo` model. Dolby Vision detection accepts the 10.10 enum values and falls back to `VideoDoViTitle` when provided by the server.
-- The `-jf10.10` version suffix identifies these builds. Debug APKs retain upstream's `.debug` application ID so they can be installed alongside an official release. They do not share its login or download data.
+- The `-jf10.10-<compatibility revision>` suffix identifies these builds. Debug APKs retain upstream's `.debug` application ID so they can be installed alongside an official release. They do not share its login or download data.
+
+## Version naming
+
+- Format: `<upstream version>-jf10.10-<compatibility revision>`.
+- Current build: `1.1.0-jf10.10-1.0`.
+- Compatibility-only updates increment the final revision: `1.1.0-jf10.10-1.1`, `1.1.0-jf10.10-1.2`, and so on.
+- After integrating the latest upstream `master`, take its official version and reset the compatibility revision to `1.0`: for example, `1.2.0-jf10.10-1.0` if upstream becomes `1.2.0`. The server marker remains `jf10.10`.
+- Update `Versions.APP_NAME` for the displayed version. Keep Android's `Versions.APP_CODE` greater than every previously delivered build's code, including after upstream merges; the current code is `34` (the earlier preview used `33`). Do not reset this numeric code with the displayed compatibility revision.
 
 ## Automated checks
 

@@ -14,7 +14,9 @@ This fork targets **Jellyfin Server 10.10.x**, including **10.10.7**, while reta
 
 It uses Jellyfin Kotlin SDK **1.7.1** (minimum server version 10.10.0; recommended 10.10.7). SDK 1.8+ requires newer servers, so keep the SDK on the 1.7 release line when updating dependencies. Compatibility with newer server releases is not verified.
 
-Compatibility builds use the version suffix `-jf10.10`. Build the phone APKs with `./gradlew :app:phone:assembleLibreDebug`, or both phone and TV APKs with `./gradlew assembleDebug`. Debug builds use a separate application ID and can be installed alongside the official release.
+Compatibility builds use `<upstream version>-jf10.10-<compatibility revision>`, currently **1.1.0-jf10.10-1.0**. Compatibility-only updates increment the final revision (`1.1`, `1.2`, …). After integrating the latest upstream `master`, use its official version and reset the compatibility revision to `1.0`. Android's numeric `versionCode` continues increasing even when the compatibility revision resets.
+
+Build the phone APKs with `./gradlew :app:phone:assembleLibreDebug`, or both phone and TV APKs with `./gradlew assembleDebug`. Debug builds use a separate application ID and can be installed alongside the official release.
 
 See the [compatibility notes and verification checklist](docs/jellyfin-10.10-compatibility.md) before using or updating this fork.
 
