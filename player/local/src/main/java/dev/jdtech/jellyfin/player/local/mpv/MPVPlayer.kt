@@ -8,6 +8,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.TextureView
+import androidx.annotation.WorkerThread
 import androidx.core.content.getSystemService
 import androidx.media3.common.AdPlaybackState
 import androidx.media3.common.AudioAttributes
@@ -63,6 +64,8 @@ class MPVPlayer(
     private var audioFocusCallback: () -> Unit = {}
     private lateinit var audioFocusRequest: AudioFocusRequestCompat
     private val handler: Handler = Handler(context.mainLooper)
+    private val frameCaptureLifecycle by lazy { FrameCaptureLifecycle { mpvLib.destroy() } }
+    private var attachedSurfaceHolder: SurfaceHolder? = null
 
     private constructor(
         builder: Builder
@@ -327,6 +330,7 @@ class MPVPlayer(
 
     override fun eventProperty(property: String, value: String) {
         handler.post {
+            if (frameCaptureLifecycle.isReleased) return@post
             when (property) {
                 "track-list" -> {
                     val newTracks = getTracks(value)
@@ -341,6 +345,7 @@ class MPVPlayer(
 
     override fun eventProperty(property: String, value: Boolean) {
         handler.post {
+            if (frameCaptureLifecycle.isReleased) return@post
             when (property) {
                 "eof-reached" -> {
                     if (value && isPlayerReady) {
@@ -387,6 +392,7 @@ class MPVPlayer(
 
     override fun eventProperty(property: String, value: Long) {
         handler.post {
+            if (frameCaptureLifecycle.isReleased) return@post
             when (property) {
                 "time-pos" -> currentPositionMs = value * C.MILLIS_PER_SECOND
                 "duration" -> {
@@ -426,6 +432,7 @@ class MPVPlayer(
 
     override fun eventProperty(property: String, value: Double) {
         handler.post {
+            if (frameCaptureLifecycle.isReleased) return@post
             when (property) {
                 "speed" -> {
                     playbackParameters = playbackParameters.withSpeed(value.toFloat())
@@ -439,6 +446,7 @@ class MPVPlayer(
 
     override fun event(eventId: Int) {
         handler.post {
+            if (frameCaptureLifecycle.isReleased) return@post
             when (eventId) {
                 MpvEvent.MPV_EVENT_START_FILE -> {
                     if (!isPlayerReady) {
@@ -631,6 +639,7 @@ class MPVPlayer(
      *   [AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK].
      */
     override fun onAudioFocusChange(focusChange: Int) {
+        if (frameCaptureLifecycle.isReleased) return
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS,
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
@@ -1094,12 +1103,26 @@ class MPVPlayer(
      * player must not be used after calling this method.
      */
     override fun release() {
+        if (frameCaptureLifecycle.isReleased) return
         if (handleAudioFocus) {
             AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
         }
         resetInternalState()
         mpvLib.removeObserver(this)
-        mpvLib.destroy()
+        attachedSurfaceHolder?.removeCallback(surfaceHolder)
+        attachedSurfaceHolder = null
+        frameCaptureLifecycle.release()
+    }
+
+    /** Save the current decoded video, without subtitles, OSD, or Android player controls. */
+    @WorkerThread
+    fun captureVideoFrame(destination: File) {
+        // libmpv commands are thread-safe, but its handle must not be destroyed during capture.
+        frameCaptureLifecycle.capture {
+            mpvLib.command(arrayOf("screenshot-to-file", destination.absolutePath, "video"))
+            // The JNI wrapper discards mpv_command's status; validate its synchronous output.
+            verifyPngScreenshot(destination)
+        }
     }
 
     override fun getCurrentTracks(): Tracks {
@@ -1327,7 +1350,10 @@ class MPVPlayer(
      * @param surfaceView The surface view.
      */
     override fun setVideoSurfaceView(surfaceView: SurfaceView?) {
-        surfaceView?.holder?.addCallback(surfaceHolder)
+        if (frameCaptureLifecycle.isReleased) return
+        attachedSurfaceHolder?.removeCallback(surfaceHolder)
+        attachedSurfaceHolder = surfaceView?.holder
+        attachedSurfaceHolder?.addCallback(surfaceHolder)
     }
 
     /**
@@ -1338,6 +1364,7 @@ class MPVPlayer(
      */
     override fun clearVideoSurfaceView(surfaceView: SurfaceView?) {
         surfaceView?.holder?.removeCallback(surfaceHolder)
+        if (attachedSurfaceHolder === surfaceView?.holder) attachedSurfaceHolder = null
     }
 
     /**
@@ -1509,6 +1536,7 @@ class MPVPlayer(
              * @param holder The SurfaceHolder whose surface is being created.
              */
             override fun surfaceCreated(holder: SurfaceHolder) {
+                if (frameCaptureLifecycle.isReleased) return
                 mpvLib.attachSurface(holder.surface)
                 mpvLib.setOptionString("force-window", "yes")
                 mpvLib.setOptionString("vo", videoOutput)
@@ -1530,6 +1558,7 @@ class MPVPlayer(
                 width: Int,
                 height: Int,
             ) {
+                if (frameCaptureLifecycle.isReleased) return
                 mpvLib.setPropertyString("android-surface-size", "${width}x$height")
             }
 
@@ -1542,6 +1571,7 @@ class MPVPlayer(
              * @param holder The SurfaceHolder whose surface is being destroyed.
              */
             override fun surfaceDestroyed(holder: SurfaceHolder) {
+                if (frameCaptureLifecycle.isReleased) return
                 mpvLib.setOptionString("vo", "null")
                 mpvLib.setOptionString("force-window", "no")
                 mpvLib.detachSurface()

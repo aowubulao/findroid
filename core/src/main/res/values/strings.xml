@@ -109,4 +109,10 @@
     <string name="download_paused">Paused</string>
     <string name="download_downloading">Downloading…</string>
     <string name="download_failed">Failed to download</string>
+    <string name="player_capture_frame">Capture video frame</string>
+    <string name="player_frame_saving">Saving video frame…</string>
+    <string name="player_frame_saved">Video frame saved</string>
+    <string name="player_frame_saved_gallery">Video frame saved to Pictures/Findroid</string>
+    <string name="player_frame_capture_failed">Could not save this video frame. Try again after the video is ready. Some protected or hardware video outputs do not support capture.</string>
+    <string name="player_frame_save_failed">Could not save the image. Check available storage and try again.</string>
 </resources>

@@ -24,16 +24,20 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Space
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.C
+import androidx.media3.common.Player
 import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import dagger.hilt.android.AndroidEntryPoint
+import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.databinding.ActivityPlayerBinding
 import dev.jdtech.jellyfin.player.local.presentation.PlayerEvents
 import dev.jdtech.jellyfin.player.local.presentation.PlayerViewModel
@@ -42,8 +46,12 @@ import dev.jdtech.jellyfin.presentation.player.TrackSelectionDialogFragment
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.PlayerGestureHelper
 import dev.jdtech.jellyfin.utils.PreviewScrubListener
+import dev.jdtech.jellyfin.utils.VideoFrameCapture
+import java.io.File
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -63,6 +71,53 @@ class PlayerActivity : BasePlayerActivity() {
     private var skipButtonTimeoutExpired: Boolean = true
 
     private lateinit var skipSegmentButton: Button
+    private lateinit var screenshotButton: ImageButton
+    private var screenshotInProgress = false
+    private var screenshotGeneration = 0
+    private var screenshotUiDestroyed = false
+    private var pendingScreenshot: File? = null
+
+    private val screenshotPlayerListener =
+        object : Player.Listener {
+            override fun onEvents(player: Player, events: Player.Events) {
+                if (
+                    events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) ||
+                        events.contains(Player.EVENT_POSITION_DISCONTINUITY) ||
+                        events.contains(Player.EVENT_VIDEO_SIZE_CHANGED)
+                ) {
+                    screenshotGeneration++
+                }
+                updateScreenshotButton()
+            }
+        }
+
+    // Android 9 can export one image without requesting access to the whole photo library.
+    private val saveScreenshotDocument =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+            val file = pendingScreenshot ?: return@registerForActivityResult
+            pendingScreenshot = null
+            lifecycleScope.launch {
+                try {
+                    if (uri != null) {
+                        VideoFrameCapture.saveToDocument(applicationContext, file, uri)
+                        Toast.makeText(
+                                this@PlayerActivity,
+                                CoreR.string.player_frame_saved,
+                                Toast.LENGTH_SHORT,
+                            )
+                            .show()
+                    }
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    showScreenshotError(error, CoreR.string.player_frame_save_failed)
+                } finally {
+                    file.delete()
+                    screenshotInProgress = false
+                    updateScreenshotButton()
+                }
+            }
+        }
 
     private val isPipSupported by lazy {
         // Check if device has PiP feature
@@ -134,6 +189,20 @@ class PlayerActivity : BasePlayerActivity() {
         val audioButton = binding.playerView.findViewById<ImageButton>(R.id.btn_audio_track)
         val subtitleButton = binding.playerView.findViewById<ImageButton>(R.id.btn_subtitle)
         val speedButton = binding.playerView.findViewById<ImageButton>(R.id.btn_speed)
+        screenshotButton = binding.playerView.findViewById(R.id.btn_screenshot)
+        pendingScreenshot =
+            savedInstanceState?.getString("pendingVideoFrame")?.let { name ->
+                // Persist only the filename, never an arbitrary path supplied by restored state.
+                if (name.startsWith("findroid-frame-") && name == File(name).name) {
+                    // Cache may be evicted while the picker is open. Retain its identity so the
+                    // result handler reports failure and removes the newly created empty document.
+                    File(cacheDir, name)
+                } else null
+            }
+        screenshotInProgress = pendingScreenshot != null
+        updateScreenshotButton()
+        viewModel.player.addListener(screenshotPlayerListener)
+        screenshotButton.setOnClickListener { captureVideoFrame() }
         skipSegmentButton = binding.playerView.findViewById(R.id.btn_skip_segment)
         val pipButton = binding.playerView.findViewById<ImageButton>(R.id.btn_pip)
         val lockButton = binding.playerView.findViewById<ImageButton>(R.id.btn_lockview)
@@ -198,6 +267,7 @@ class PlayerActivity : BasePlayerActivity() {
                             }
 
                             // File Loaded
+                            updateScreenshotButton()
                             if (fileLoaded) {
                                 audioButton.isEnabled = true
                                 audioButton.imageAlpha = 255
@@ -335,6 +405,7 @@ class PlayerActivity : BasePlayerActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        screenshotGeneration++
 
         val itemId = UUID.fromString(intent.extras!!.getString("itemId"))
         val itemKind = intent.extras!!.getString("itemKind")
@@ -347,12 +418,108 @@ class PlayerActivity : BasePlayerActivity() {
         )
     }
 
+    private fun updateScreenshotButton() {
+        if (!::screenshotButton.isInitialized || screenshotUiDestroyed) return
+        val player = viewModel.player
+        val enabled =
+            !screenshotInProgress &&
+                viewModel.uiState.value.fileLoaded &&
+                player.playbackState == Player.STATE_READY &&
+                player.videoSize.width > 0 &&
+                player.videoSize.height > 0
+        screenshotButton.isEnabled = enabled
+        screenshotButton.imageAlpha = if (enabled) 255 else 75
+        screenshotButton.contentDescription =
+            getString(
+                if (screenshotInProgress) CoreR.string.player_frame_saving
+                else CoreR.string.player_capture_frame
+            )
+    }
+
+    private fun captureVideoFrame() {
+        if (screenshotInProgress || !screenshotButton.isEnabled) return
+        screenshotInProgress = true
+        updateScreenshotButton()
+        val generation = screenshotGeneration
+        lifecycleScope.launch {
+            var file: File? = null
+            var frameCaptured = false
+            try {
+                file =
+                    VideoFrameCapture.capture(
+                        applicationContext,
+                        viewModel.player,
+                        binding.playerView.videoSurfaceView,
+                    )
+                // A seek or playlist transition while copying must not save a different frame.
+                if (generation != screenshotGeneration) {
+                    throw IOException("Playback changed while capturing the frame")
+                }
+                frameCaptured = true
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    VideoFrameCapture.saveToGallery(applicationContext, file, file.name)
+                    Toast.makeText(
+                            this@PlayerActivity,
+                            CoreR.string.player_frame_saved_gallery,
+                            Toast.LENGTH_SHORT,
+                        )
+                        .show()
+                } else {
+                    pendingScreenshot = file
+                    try {
+                        saveScreenshotDocument.launch(file.name)
+                    } catch (error: Exception) {
+                        pendingScreenshot = null
+                        throw error
+                    }
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                showScreenshotError(
+                    error,
+                    if (frameCaptured) CoreR.string.player_frame_save_failed
+                    else CoreR.string.player_frame_capture_failed,
+                )
+            } catch (error: OutOfMemoryError) {
+                showScreenshotError(error)
+            } finally {
+                if (pendingScreenshot == null) {
+                    file?.delete()
+                    screenshotInProgress = false
+                    updateScreenshotButton()
+                }
+            }
+        }
+    }
+
+    private fun showScreenshotError(
+        error: Throwable,
+        message: Int = CoreR.string.player_frame_capture_failed,
+    ) {
+        Timber.w(error, "Could not save the current video frame")
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        pendingScreenshot?.let { outState.putString("pendingVideoFrame", it.name) }
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroy() {
+        screenshotUiDestroyed = true
+        viewModel.player.removeListener(screenshotPlayerListener)
+        if (isFinishing) pendingScreenshot?.delete()
+        super.onDestroy()
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (
             Build.VERSION.SDK_INT < Build.VERSION_CODES.S &&
                 appPreferences.getValue(appPreferences.playerPipGesture) &&
                 viewModel.player.isPlaying &&
+                pendingScreenshot == null &&
                 !isControlsLocked
         ) {
             pictureInPicture()

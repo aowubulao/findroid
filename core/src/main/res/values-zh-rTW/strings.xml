@@ -108,4 +108,10 @@
     <string name="download_paused">已暖停</string>
     <string name="download_downloading">下載中…</string>
     <string name="download_failed">下載失敗</string>
+    <string name="player_capture_frame">擷取目前影片影格</string>
+    <string name="player_frame_saving">正在儲存影片影格…</string>
+    <string name="player_frame_saved">影片影格已儲存</string>
+    <string name="player_frame_saved_gallery">影片影格已儲存至 Pictures/Findroid</string>
+    <string name="player_frame_capture_failed">無法儲存目前影片影格，請在影片就緒後重試。部分受保護的影片或硬體輸出不支援擷取。</string>
+    <string name="player_frame_save_failed">無法儲存圖片，請檢查可用儲存空間後再試。</string>
 </resources>

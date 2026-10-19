@@ -157,4 +157,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.savedstate.compose)
+    testImplementation(libs.junit)
 }
