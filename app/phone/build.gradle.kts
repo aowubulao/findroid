@@ -1,3 +1,5 @@
+import com.android.build.api.variant.FilterConfiguration
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose.compiler)
@@ -101,6 +103,20 @@ androidComponents.finalizeDsl { extension ->
     tasks
         .matching { it.name.matches(Regex("pre.*ReleaseBuild")) }
         .configureEach { dependsOn(validation) }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            val abi =
+                output.filters
+                    .firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }
+                    ?.identifier
+            output.outputFileName.set(
+                "findroid-v${output.versionName.get()}-${variant.flavorName}-$abi.apk"
+            )
+        }
+    }
 }
 
 dependencies {

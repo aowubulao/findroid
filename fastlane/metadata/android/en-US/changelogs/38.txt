@@ -1,0 +1,5 @@
+Jellyfin 10.10 compatibility build based on Findroid 1.2.0. Requires Android 10 or later.
+
+- Request local network access during setup on Android 17. Review permissions in settings on phone and TV.
+- Fix a crash when an actor has multiple roles and resize the phone layout when the keyboard opens.
+- Update Korean and Brazilian Portuguese translations.

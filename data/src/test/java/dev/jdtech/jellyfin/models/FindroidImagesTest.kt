@@ -15,7 +15,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [28])
+@Config(manifest = Config.NONE, sdk = [29])
 class FindroidImagesTest {
     private val itemId = UUID(0, 1)
     private val seriesId = UUID(0, 2)

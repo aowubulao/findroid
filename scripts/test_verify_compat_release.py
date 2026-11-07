@@ -16,8 +16,8 @@ class VerifyCompatibilityReleaseTest(unittest.TestCase):
         self.args = argparse.Namespace(
             apk=root / "release.apk",
             build_tools=root,
-            version="1.1.0-jf10.10-1.1",
-            version_code=35,
+            version="1.2.0-jf10.10-1.0",
+            version_code=38,
             certificate_sha256="a" * 64,
             mapping=root / "mapping.txt",
         )
@@ -25,9 +25,9 @@ class VerifyCompatibilityReleaseTest(unittest.TestCase):
         self.args.mapping.write_text("# compiler: R8\n# pg_map_id: 1234567\n")
         self.args.mapping.with_name("configuration.txt").write_text("-keepattributes SourceFile\n")
         self.badging = (
-            "package: name='dev.jdtech.jellyfin.compat' versionCode='35' "
-            "versionName='1.1.0-jf10.10-1.1'\n"
-            "application-label:'Findroid'\nsdkVersion:'28'\ntargetSdkVersion:'36'\n"
+            "package: name='dev.jdtech.jellyfin.compat' versionCode='38' "
+            "versionName='1.2.0-jf10.10-1.0'\n"
+            "application-label:'Findroid'\nsdkVersion:'29'\ntargetSdkVersion:'37'\n"
         )
         self.manifest = "A: android:debuggable(0x0101000f)=(type 0x12)0x0\n"
         self.signatures = (
@@ -59,7 +59,7 @@ class VerifyCompatibilityReleaseTest(unittest.TestCase):
     def test_valid_release(self):
         result = self.verify()
         self.assertEqual("dev.jdtech.jellyfin.compat", result["application_id"])
-        self.assertEqual(35, result["version_code"])
+        self.assertEqual(38, result["version_code"])
         self.assertFalse(result["debuggable"])
         self.assertEqual(["v2", "v3"], result["verified_signature_schemes"])
 
@@ -76,11 +76,11 @@ class VerifyCompatibilityReleaseTest(unittest.TestCase):
         original = self.badging
         for old, new in (
             ("dev.jdtech.jellyfin.compat", "dev.jdtech.jellyfin"),
-            ("versionCode='35'", "versionCode='34'"),
-            ("versionName='1.1.0-jf10.10-1.1'", "versionName='1.1.0'"),
+            ("versionCode='38'", "versionCode='34'"),
+            ("versionName='1.2.0-jf10.10-1.0'", "versionName='1.1.0'"),
             ("application-label:'Findroid'", "application-label:'Findroid Debug'"),
-            ("sdkVersion:'28'", "sdkVersion:'29'"),
-            ("targetSdkVersion:'36'", "targetSdkVersion:'35'"),
+            ("sdkVersion:'29'", "sdkVersion:'28'"),
+            ("targetSdkVersion:'37'", "targetSdkVersion:'36'"),
         ):
             with self.subTest(old=old):
                 self.badging = original.replace(old, new)

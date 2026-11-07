@@ -25,7 +25,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [29])
 class FallbackAsyncImageTest {
     @get:Rule val compose = createComposeRule()
 

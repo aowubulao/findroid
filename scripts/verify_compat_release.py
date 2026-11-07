@@ -29,8 +29,8 @@ def verify(args):
     require(package.get("versionCode") == str(args.version_code), "Wrong version code")
     require("application-label:'Findroid'" in badging, "Wrong display name")
     require("application-debuggable" not in badging, "APK is debuggable")
-    require("sdkVersion:'28'" in badging, "Unexpected minimum Android version")
-    require("targetSdkVersion:'36'" in badging, "Unexpected target Android version")
+    require("sdkVersion:'29'" in badging, "Unexpected minimum Android version")
+    require("targetSdkVersion:'37'" in badging, "Unexpected target Android version")
     manifest = run(args.build_tools / "aapt", "dump", "xmltree", apk, "AndroidManifest.xml")
     for line in manifest.splitlines():
         if "android:debuggable(" in line or "android:testOnly(" in line:
@@ -95,8 +95,8 @@ def verify(args):
         "debuggable": False,
         "test_only": False,
         "abi": "arm64-v8a",
-        "minimum_sdk": 28,
-        "target_sdk": 36,
+        "minimum_sdk": 29,
+        "target_sdk": 37,
         "certificate_sha256": fingerprints[0],
         "verified_signature_schemes": ["v2", "v3"],
         "zip_alignment": "4-byte files / 16 KiB native libraries",
