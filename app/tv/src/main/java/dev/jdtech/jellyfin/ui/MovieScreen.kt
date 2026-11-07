@@ -42,8 +42,8 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.presentation.components.FallbackAsyncImage
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.core.presentation.theme.Yellow
@@ -94,8 +94,8 @@ private fun MovieScreenLayout(state: MovieState, onAction: (MovieAction) -> Unit
                         size = coordinates.size.toSize()
                     }
             ) {
-                AsyncImage(
-                    model = movie.images.backdrop,
+                FallbackAsyncImage(
+                    imageUris = movie.images.backdropCandidates(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),

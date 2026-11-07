@@ -25,7 +25,7 @@ import androidx.tv.material3.ClickableSurfaceScale
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
+import dev.jdtech.jellyfin.core.presentation.components.FallbackAsyncImage
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.models.FindroidItem
@@ -54,8 +54,8 @@ fun HomeCarouselItem(item: FindroidItem, onAction: (HomeAction) -> Unit) {
         scale = ClickableSurfaceScale.None,
     ) {
         Box {
-            AsyncImage(
-                model = item.images.backdrop,
+            FallbackAsyncImage(
+                imageUris = item.images.backdropCandidates(),
                 placeholder = ColorPainter(MaterialTheme.colorScheme.surface),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,

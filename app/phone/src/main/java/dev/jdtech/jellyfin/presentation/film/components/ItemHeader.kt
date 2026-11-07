@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
-import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -19,12 +18,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.core.presentation.components.FallbackAsyncImage
 import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.parallaxLayoutModifier
 
@@ -35,28 +31,12 @@ fun ItemHeader(
     showLogo: Boolean = false,
     content: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    val context = LocalContext.current
-    var backdropUri =
-        when (item) {
-            is FindroidEpisode -> item.images.primary
-            else -> item.images.backdrop
-        }
-
-    // Ugly workaround to append the files directory when loading local images
-    if (backdropUri?.scheme == null) {
-        backdropUri =
-            Uri.Builder()
-                .appendEncodedPath("${context.filesDir}")
-                .appendEncodedPath(backdropUri?.path)
-                .build()
-    }
-
     ItemHeaderBase(
         item = item,
         showLogo = showLogo,
         backdropImage = {
-            AsyncImage(
-                model = backdropUri,
+            FallbackAsyncImage(
+                imageUris = item.images.backdropCandidates(),
                 contentDescription = null,
                 modifier =
                     Modifier.fillMaxSize()
@@ -76,29 +56,12 @@ fun ItemHeader(
     showLogo: Boolean = false,
     content: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    val context = LocalContext.current
-    var backdropUri =
-        when (item) {
-            is FindroidEpisode -> item.images.primary
-            is FindroidSeason -> item.images.showBackdrop
-            else -> item.images.backdrop
-        }
-
-    // Ugly workaround to append the files directory when loading local images
-    if (backdropUri?.scheme == null) {
-        backdropUri =
-            Uri.Builder()
-                .appendEncodedPath("${context.filesDir}")
-                .appendEncodedPath(backdropUri?.path)
-                .build()
-    }
-
     ItemHeaderBase(
         item = item,
         showLogo = showLogo,
         backdropImage = {
-            AsyncImage(
-                model = backdropUri,
+            FallbackAsyncImage(
+                imageUris = item.images.backdropCandidates(),
                 contentDescription = null,
                 modifier =
                     Modifier.fillMaxSize()
@@ -120,12 +83,6 @@ private fun ItemHeaderBase(
 ) {
     val backgroundColor = MaterialTheme.colorScheme.background
 
-    val logoUri =
-        when (item) {
-            is FindroidEpisode -> item.images.showLogo
-            else -> item.images.logo
-        }
-
     Box(modifier = Modifier.height(288.dp).clipToBounds()) {
         backdropImage()
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -140,8 +97,8 @@ private fun ItemHeaderBase(
         }
         content()
         if (showLogo) {
-            AsyncImage(
-                model = logoUri,
+            FallbackAsyncImage(
+                imageUris = item.images.logoCandidates(),
                 contentDescription = null,
                 modifier =
                     Modifier.align(Alignment.BottomCenter)

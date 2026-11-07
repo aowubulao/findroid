@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.tv.material3.MaterialTheme
-import coil3.compose.AsyncImage
+import dev.jdtech.jellyfin.core.presentation.components.FallbackAsyncImage
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
@@ -19,21 +19,18 @@ enum class Direction {
 
 @Composable
 fun ItemPoster(item: FindroidItem, direction: Direction, modifier: Modifier = Modifier) {
-    var imageUri = item.images.primary
-
-    when (direction) {
-        Direction.HORIZONTAL -> {
-            if (item is FindroidMovie) imageUri = item.images.backdrop
+    val imageUris =
+        when {
+            direction == Direction.HORIZONTAL && item is FindroidMovie ->
+                item.images.backdropCandidates()
+            else ->
+                item.images.primaryCandidates(
+                    preferShow = direction == Direction.VERTICAL && item is FindroidEpisode
+                )
         }
-        Direction.VERTICAL -> {
-            when (item) {
-                is FindroidEpisode -> imageUri = item.images.showPrimary
-            }
-        }
-    }
 
-    AsyncImage(
-        model = imageUri,
+    FallbackAsyncImage(
+        imageUris = imageUris,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier =

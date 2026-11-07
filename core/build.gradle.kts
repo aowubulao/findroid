@@ -24,6 +24,8 @@ android {
     productFlavors { register("libre") }
 
     buildFeatures { compose = true }
+
+    testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
 dependencies {
@@ -41,6 +43,7 @@ dependencies {
     implementation(libs.androidx.paging)
     implementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.work)
+    implementation(libs.coil.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.jellyfin.core)
@@ -50,4 +53,10 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.slf4j.api)
     implementation(libs.slf4j.android)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.foundation)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

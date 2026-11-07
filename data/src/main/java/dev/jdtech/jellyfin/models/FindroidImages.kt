@@ -11,65 +11,56 @@ data class FindroidImages(
     val backdrop: Uri? = null,
     val logo: Uri? = null,
     val showPrimary: Uri? = null,
+    // Inherited background/logo owners can be a season or series, as specified by Jellyfin.
     val showBackdrop: Uri? = null,
     val showLogo: Uri? = null,
-)
+    val parentPrimary: Uri? = null,
+) {
+    fun primaryCandidates(preferShow: Boolean = false): List<Uri> {
+        val covers =
+            if (preferShow) listOfNotNull(showPrimary, primary, parentPrimary)
+            else listOfNotNull(primary, showPrimary, parentPrimary)
+        return (covers + listOfNotNull(backdrop, showBackdrop)).distinct()
+    }
+
+    fun backdropCandidates(): List<Uri> =
+        listOfNotNull(backdrop, showBackdrop, primary, showPrimary, parentPrimary).distinct()
+
+    fun logoCandidates(): List<Uri> = listOfNotNull(logo, showLogo).distinct()
+}
 
 fun BaseItemDto.toFindroidImages(jellyfinRepository: JellyfinRepository): FindroidImages {
-    val baseUrl = Uri.parse(jellyfinRepository.getBaseUrl())
-    val primary =
-        imageTags?.get(ImageType.PRIMARY)?.let { tag ->
-            baseUrl
-                .buildUpon()
-                .appendEncodedPath("items/$id/Images/${ImageType.PRIMARY}")
-                .appendQueryParameter("tag", tag)
-                .build()
-        }
-    val backdrop =
-        backdropImageTags?.firstOrNull()?.let { tag ->
-            baseUrl
-                .buildUpon()
-                .appendEncodedPath("items/$id/Images/${ImageType.BACKDROP}/0")
-                .appendQueryParameter("tag", tag)
-                .build()
-        }
-    val logo =
-        imageTags?.get(ImageType.LOGO)?.let { tag ->
-            baseUrl
-                .buildUpon()
-                .appendEncodedPath("items/$id/Images/${ImageType.LOGO}")
-                .appendQueryParameter("tag", tag)
-                .build()
-        }
-    val showPrimary = seriesPrimaryImageTag?.let { tag ->
-        baseUrl
+    return toFindroidImages(jellyfinRepository.getBaseUrl())
+}
+
+internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
+    val baseUri = Uri.parse(baseUrl)
+
+    fun imageUri(itemId: String?, type: ImageType, tag: String?): Uri? {
+        if (itemId.isNullOrBlank() || tag.isNullOrBlank()) return null
+        val index = if (type == ImageType.BACKDROP) "/0" else ""
+        return baseUri
             .buildUpon()
-            .appendEncodedPath("items/$seriesId/Images/${ImageType.PRIMARY}")
-            .appendQueryParameter("tag", tag)
-            .build()
-    }
-    val showBackdrop = seriesPrimaryImageTag?.let { tag ->
-        baseUrl
-            .buildUpon()
-            .appendEncodedPath("items/$seriesId/Images/${ImageType.BACKDROP}/0")
-            .appendQueryParameter("tag", tag)
-            .build()
-    }
-    val showLogo = seriesPrimaryImageTag?.let { tag ->
-        baseUrl
-            .buildUpon()
-            .appendEncodedPath("items/$seriesId/Images/${ImageType.LOGO}")
+            .appendEncodedPath("items/$itemId/Images/$type$index")
             .appendQueryParameter("tag", tag)
             .build()
     }
 
     return FindroidImages(
-        primary = primary,
-        backdrop = backdrop,
-        logo = logo,
-        showPrimary = showPrimary,
-        showBackdrop = showBackdrop,
-        showLogo = showLogo,
+        primary = imageUri(id.toString(), ImageType.PRIMARY, imageTags?.get(ImageType.PRIMARY)),
+        backdrop = imageUri(id.toString(), ImageType.BACKDROP, backdropImageTags?.firstOrNull()),
+        logo = imageUri(id.toString(), ImageType.LOGO, imageTags?.get(ImageType.LOGO)),
+        showPrimary = imageUri(seriesId?.toString(), ImageType.PRIMARY, seriesPrimaryImageTag),
+        // Jellyfin supplies the owner and tag for inherited images independently of the cover.
+        showBackdrop =
+            imageUri(
+                parentBackdropItemId?.toString(),
+                ImageType.BACKDROP,
+                parentBackdropImageTags?.firstOrNull(),
+            ),
+        showLogo = imageUri(parentLogoItemId?.toString(), ImageType.LOGO, parentLogoImageTag),
+        parentPrimary =
+            imageUri(parentPrimaryImageItemId, ImageType.PRIMARY, parentPrimaryImageTag),
     )
 }
 
@@ -102,5 +93,6 @@ fun FindroidEpisodeDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
         backdrop = Uri.Builder().appendEncodedPath("images/$itemId/backdrop").build(),
         showPrimary = Uri.Builder().appendEncodedPath("images/$seriesId/primary").build(),
         showBackdrop = Uri.Builder().appendEncodedPath("images/$seriesId/backdrop").build(),
+        parentPrimary = Uri.Builder().appendEncodedPath("images/$seasonId/primary").build(),
     )
 }

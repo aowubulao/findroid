@@ -26,6 +26,8 @@ deploymentTargetDropDown.xml
 render.experimental.xml
 
 # Keystore files
+/.signing/
+findroid-signing-backup.zip
 *.jks
 *.keystore
 *.p12

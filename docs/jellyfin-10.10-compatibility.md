@@ -13,10 +13,10 @@ This branch keeps Findroid's current UI and players and targets Jellyfin Server 
 ## Version naming
 
 - Format: `<upstream version>-jf10.10-<compatibility revision>`.
-- Current build: `1.1.0-jf10.10-1.2`.
-- Compatibility-only updates increment the final revision: `1.1.0-jf10.10-1.1`, `1.1.0-jf10.10-1.2`, and so on.
+- Current build: `1.1.0-jf10.10-1.3`.
+- Compatibility-only updates increment the final revision: `1.1.0-jf10.10-1.2`, `1.1.0-jf10.10-1.3`, and so on.
 - After integrating the latest upstream `master`, take its official version and reset the compatibility revision to `1.0`: for example, `1.2.0-jf10.10-1.0` if upstream becomes `1.2.0`. The server marker remains `jf10.10`.
-- Update `Versions.APP_NAME` for the displayed version. Keep Android's `Versions.APP_CODE` greater than every previously delivered build's code, including after upstream merges; the current code is `36` (Release 1.1 used `35`; earlier previews used `33` and `34`). Do not reset this numeric code with the displayed compatibility revision.
+- Update `Versions.APP_NAME` for the displayed version. Keep Android's `Versions.APP_CODE` greater than every previously delivered build's code, including after upstream merges; the current code is `37` (Release 1.2 used `36`, Release 1.1 used `35`; earlier previews used `33` and `34`). Do not reset this numeric code with the displayed compatibility revision.
 
 ## Automated checks
 
@@ -26,7 +26,7 @@ Use the repository's JDK 17, Android SDK 37, and build-tools 37.0.0 toolchain:
 ./gradlew ktfmtCheck
 ./gradlew :buildSrc:test verifyCompatibilityRelease
 python3 -m unittest discover -s scripts -p "test_*.py"
-./gradlew :data:testDebugUnitTest :modes:film:testDebugUnitTest \
+./gradlew :data:testDebugUnitTest :core:testLibreDebugUnitTest :modes:film:testDebugUnitTest \
   :player:local:testDebugUnitTest :app:phone:testLibreDebugUnitTest
 ./gradlew :app:phone:assembleLibreDebug
 # Also build Android TV:
@@ -35,7 +35,9 @@ python3 -m unittest discover -s scripts -p "test_*.py"
 
 The Release configuration checks run before every Release build and also run in Debug CI without needing private keys. They enforce the independent application ID, compatibility version scheme, non-debuggable status, R8/resource shrinking, and rejection of Gradle signing configurations (including default/flavor configurations). The validation rules have their own regression tests.
 
-The regression tests pin the supported SDK server versions, deserialize representative 10.10 trickplay and Dolby Vision metadata, and cover all supported HDR/Dolby Vision ranges, missing metadata, and the title fallback. The build workflow runs the compatibility and frame-capture regression suites alongside APK assembly.
+The regression tests pin the supported SDK server versions, deserialize representative 10.10 trickplay and Dolby Vision metadata, and cover all supported HDR/Dolby Vision ranges, missing metadata, and the title fallback. Image tests cover inherited image owners/tags, missing episode covers and backdrops, failed requests, and missing offline files. The build workflow runs the compatibility, image, and frame-capture regression suites alongside APK assembly.
+
+Episode cards prefer the episode cover and fall back to the series or parent cover. Detail backgrounds and home banners prefer the item's backdrop, then its inherited backdrop, then available covers. Portrait episode cards continue to prefer the series poster. Phone and TV share these rules and try the next candidate after an image fails to load. Inherited backdrop and logo requests use their own Jellyfin owner IDs and cache tags rather than the series cover's tag.
 
 ## Independent signed Release
 
@@ -47,7 +49,7 @@ Build and test with JDK 17 / Android SDK 37 / build-tools 37.0.0:
 
 ```sh
 ./gradlew :buildSrc:test verifyCompatibilityRelease ktfmtCheck \
-  :data:testDebugUnitTest :modes:film:testDebugUnitTest \
+  :data:testDebugUnitTest :core:testLibreDebugUnitTest :modes:film:testDebugUnitTest \
   :player:local:testDebugUnitTest :app:phone:testLibreDebugUnitTest \
   :app:phone:assembleLibreRelease :app:tv:assembleLibreRelease
 ```
@@ -62,7 +64,7 @@ Keep the dedicated keystore and its two password files in a restricted directory
   --key-pass "file:$SIGNING_DIR/key-password.txt" \
   --debuggable-apk-permitted false \
   --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled false \
-  --out "$OUTPUT_DIR/findroid-1.1.0-jf10.10-1.2-phone-arm64-v8a-release.apk" \
+  --out "$OUTPUT_DIR/findroid-1.1.0-jf10.10-1.3-phone-arm64-v8a-release.apk" \
   app/phone/build/outputs/apk/libre/release/phone-libre-arm64-v8a-release-unsigned.apk
 ```
 
@@ -78,8 +80,8 @@ Verify each final signed APK (use `app/tv`'s mapping for the TV APK):
 
 ```sh
 python3 scripts/verify_compat_release.py \
-  "$OUTPUT_DIR/findroid-1.1.0-jf10.10-1.2-phone-arm64-v8a-release.apk" \
-  --build-tools "$BUILD_TOOLS" --version 1.1.0-jf10.10-1.2 --version-code 36 \
+  "$OUTPUT_DIR/findroid-1.1.0-jf10.10-1.3-phone-arm64-v8a-release.apk" \
+  --build-tools "$BUILD_TOOLS" --version 1.1.0-jf10.10-1.3 --version-code 37 \
   --certificate-sha256 a99931d4c73f6fe364537ce711cada94c8ba8f4960392e066d0c0fda84f2215d \
   --mapping app/phone/build/outputs/mapping/libreRelease/mapping.txt
 ```
@@ -92,6 +94,7 @@ Before treating a build as ready for daily use, run this checklist against Jelly
 
 - Add the server, sign in with username/password, sign out, and sign in with Quick Connect if enabled.
 - Browse libraries, movies, series, seasons, episodes, search, suggestions, and continue watching.
+- Check episode cards without episode covers, detail pages without backdrops, and missing offline image files on phone and TV; available parent images or covers should appear instead of blank artwork.
 - Play a video with each enabled player; seek, pause, resume, and switch available audio/subtitles.
 - Check SDR, HDR10, HDR10+, HLG, and Dolby Vision metadata using suitable media and hardware.
 - Verify progress, favorites, and watched/unwatched state on the server, including after reconnecting from offline use.
