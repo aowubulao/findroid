@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29])
@@ -82,6 +83,7 @@ class FallbackAsyncImageTest {
     }
 
     @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun missingOfflineBackgroundFallsBackToAnExistingCoverInTheFilesDirectory() {
         val coverFile = File(context.filesDir, "images/offline/primary")
         coverFile.parentFile!!.mkdirs()
