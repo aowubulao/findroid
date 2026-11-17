@@ -28,10 +28,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,9 +52,11 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import dev.jdtech.jellyfin.BuildConfig
 import dev.jdtech.jellyfin.R
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.update.AppUpdateDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.settings.R as SettingsR
+import dev.jdtech.jellyfin.settings.presentation.enums.DeviceType
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +75,10 @@ fun AboutScreen(navigateBack: () -> Unit) {
     val paddingEnd = safePaddingEnd
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    var showUpdate by rememberSaveable { mutableStateOf(false) }
+    if (showUpdate) {
+        AppUpdateDialog(DeviceType.PHONE, onDismiss = { showUpdate = false })
+    }
 
     val libraries by produceLibraries(R.raw.aboutlibraries)
 
@@ -119,6 +129,9 @@ fun AboutScreen(navigateBack: () -> Unit) {
                                 text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                                 style = MaterialTheme.typography.bodyLarge,
                             )
+                            TextButton(onClick = { showUpdate = true }) {
+                                Text(stringResource(CoreR.string.app_update_check))
+                            }
                             Spacer(Modifier.height(MaterialTheme.spacings.small))
                             Text(
                                 text = stringResource(CoreR.string.app_description),

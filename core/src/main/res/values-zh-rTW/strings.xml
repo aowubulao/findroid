@@ -114,4 +114,19 @@
     <string name="player_frame_saved_gallery">影片影格已儲存至 Pictures/Findroid</string>
     <string name="player_frame_capture_failed">無法儲存目前影片影格，請在影片就緒後重試。部分受保護的影片或硬體輸出不支援擷取。</string>
     <string name="player_frame_save_failed">無法儲存圖片，請檢查可用儲存空間後再試。</string>
+    <string name="app_update_check">檢查更新</string>
+    <string name="app_update_checking">正在從 GitHub 檢查更新…</string>
+    <string name="app_update_current">目前安裝的版本暫無可用更新。</string>
+    <string name="app_update_version">Findroid %1$s</string>
+    <string name="app_update_available">有適用於此裝置的新版本。</string>
+    <string name="app_update_download">下載更新</string>
+    <string name="app_update_downloading">正在下載更新… %1$d%%</string>
+    <string name="app_update_check_failed">無法檢查 GitHub 發布記錄，請再試一次。</string>
+    <string name="app_update_download_failed">下載失敗，請檢查網路和可用儲存空間後再試一次。</string>
+    <string name="app_update_invalid">APK 驗證失敗，請重新下載更新。</string>
+    <string name="app_update_ready">更新已下載並驗證，可以安裝。</string>
+    <string name="app_update_permission">請在系統設定中允許 Findroid 安裝來自此來源的應用程式，然後返回繼續安裝。</string>
+    <string name="app_update_allow">允許安裝</string>
+    <string name="app_update_install">安裝更新</string>
+    <string name="app_update_install_failed">無法啟動安裝，請檢查系統的安裝權限後再試一次。</string>
 </resources>

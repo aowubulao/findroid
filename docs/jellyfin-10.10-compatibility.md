@@ -13,10 +13,10 @@ This branch requires Android 10 (API 29) or later, targets Android 17 (API 37), 
 ## Version naming
 
 - Format: `<upstream version>-jf10.10-<compatibility revision>`.
-- Current build: `1.2.0-jf10.10-1.0`.
+- Current build: `1.2.0-jf10.10-1.1`.
 - Compatibility-only updates increment the final revision: `1.2.0-jf10.10-1.1`, `1.2.0-jf10.10-1.2`, and so on.
 - After integrating the latest upstream `main`, take its official version and reset the compatibility revision to `1.0`: for example, `1.2.0-jf10.10-1.0` if upstream becomes `1.2.0`. The server marker remains `jf10.10`.
-- Update `Versions.APP_NAME` for the displayed version. Keep Android's `Versions.APP_CODE` greater than every previously delivered build's code, including after upstream merges; the current code is `38` (the previous compatibility release used `37`). Do not reset this numeric code with the displayed compatibility revision.
+- Update `Versions.APP_NAME` for the displayed version. Keep Android's `Versions.APP_CODE` greater than every previously delivered build's code, including after upstream merges; the current code is `39` (the previous compatibility build used `38`). Do not reset this numeric code with the displayed compatibility revision.
 
 ## Automated checks
 
@@ -64,8 +64,8 @@ Keep the dedicated keystore and its two password files in a restricted directory
   --key-pass "file:$SIGNING_DIR/key-password.txt" \
   --debuggable-apk-permitted false \
   --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled false \
-  --out "$OUTPUT_DIR/findroid-1.2.0-jf10.10-1.0-phone-arm64-v8a-release.apk" \
-  app/phone/build/outputs/apk/libre/release/findroid-v1.2.0-jf10.10-1.0-libre-arm64-v8a.apk
+  --out "$OUTPUT_DIR/findroid-1.2.0-jf10.10-1.1-phone-arm64-v8a-release.apk" \
+  app/phone/build/outputs/apk/libre/release/findroid-v1.2.0-jf10.10-1.1-libre-arm64-v8a.apk
 ```
 
 For TV, use `app/tv/build/outputs/apk/libre/release/tv-libre-arm64-v8a-release-unsigned.apk` and replace `phone` with `tv` in the signed output name. Signing with build-tools 37 also aligns the APK's native-library entries to 16 KiB; alignment alone does not certify every native library's ELF page-size support or device compatibility.
@@ -80,13 +80,15 @@ Verify each final signed APK (use `app/tv`'s mapping for the TV APK):
 
 ```sh
 python3 scripts/verify_compat_release.py \
-  "$OUTPUT_DIR/findroid-1.2.0-jf10.10-1.0-phone-arm64-v8a-release.apk" \
-  --build-tools "$BUILD_TOOLS" --version 1.2.0-jf10.10-1.0 --version-code 38 \
+  "$OUTPUT_DIR/findroid-1.2.0-jf10.10-1.1-phone-arm64-v8a-release.apk" \
+  --build-tools "$BUILD_TOOLS" --version 1.2.0-jf10.10-1.1 --version-code 39 \
   --certificate-sha256 a99931d4c73f6fe364537ce711cada94c8ba8f4960392e066d0c0fda84f2215d \
   --mapping app/phone/build/outputs/mapping/libreRelease/mapping.txt
 ```
 
 The verifier checks the package identity, version, label, non-debuggable/non-test-only manifest, ARM64-only native libraries, signature v3 for supported Android versions plus a separate v2-block verification for API 24–27, the exact public certificate, ZIP alignment, absence of embedded keystores, and R8 mapping/configuration. It checks the mapping ID against the APK's Release-mode R8 DEX marker to reject stale or wrong-module mappings. Preserve the R8 mapping and configuration alongside the source commit for crash diagnosis. Confirm resource shrinking is enabled in the Release configuration and that R8 generated the corresponding `shrunk_resources_proto_format` output. A successful build and cryptographic verification do not replace the live-device/server checklist below.
+
+For in-app updates, attach the signed APKs and `release-verification.json` to the same GitHub Release. Put the verifier output for each published APK in the JSON document’s `artifacts` array. Keep each report’s `apk` value identical to its asset name, ending in `-phone-<abi>-release.apk` or `-tv-<abi>-release.apk`. A release can include either or both variants.
 
 ## Live-server verification
 

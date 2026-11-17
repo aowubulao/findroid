@@ -11,7 +11,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -20,8 +23,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.update.AppUpdateDialog
+import dev.jdtech.jellyfin.presentation.settings.components.SettingsCategoryCard
 import dev.jdtech.jellyfin.presentation.settings.components.SettingsGroupCard
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -92,6 +99,12 @@ fun SettingsScreen(
 @Composable
 private fun SettingsScreenLayout(state: SettingsState, onAction: (SettingsAction) -> Unit) {
     val focusRequester = remember { FocusRequester() }
+    var showUpdate by rememberSaveable { mutableStateOf(false) }
+    if (showUpdate) {
+        AppUpdateDialog(DeviceType.TV, onDismiss = { showUpdate = false }) { label, click ->
+            Button(onClick = click) { Text(label) }
+        }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -112,6 +125,15 @@ private fun SettingsScreenLayout(state: SettingsState, onAction: (SettingsAction
         }
         items(state.preferenceGroups) { group ->
             SettingsGroupCard(group = group, onAction = onAction)
+        }
+        item {
+            SettingsCategoryCard(
+                PreferenceCategory(
+                    nameStringResource = CoreR.string.app_update_check,
+                    iconDrawableId = CoreR.drawable.ic_download,
+                    onClick = { showUpdate = true },
+                )
+            )
         }
     }
     LaunchedEffect(true) { focusRequester.requestFocus() }

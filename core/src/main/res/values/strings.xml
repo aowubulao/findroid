@@ -115,4 +115,19 @@
     <string name="player_frame_saved_gallery">Video frame saved to Pictures/Findroid</string>
     <string name="player_frame_capture_failed">Could not save this video frame. Try again after the video is ready. Some protected or hardware video outputs do not support capture.</string>
     <string name="player_frame_save_failed">Could not save the image. Check available storage and try again.</string>
+    <string name="app_update_check">Check for updates</string>
+    <string name="app_update_checking">Checking GitHub for updates…</string>
+    <string name="app_update_current">No update is available for this installation.</string>
+    <string name="app_update_version">Findroid %1$s</string>
+    <string name="app_update_available">A new version is available for this device.</string>
+    <string name="app_update_download">Download update</string>
+    <string name="app_update_downloading">Downloading update… %1$d%%</string>
+    <string name="app_update_check_failed">Could not check GitHub releases. Please try again.</string>
+    <string name="app_update_download_failed">Download failed. Check your connection and available storage, then try again.</string>
+    <string name="app_update_invalid">APK verification failed. Download the update again.</string>
+    <string name="app_update_ready">The update is ready to install.</string>
+    <string name="app_update_permission">To install this update, allow Findroid to install apps from this source in Android settings.</string>
+    <string name="app_update_allow">Allow installation</string>
+    <string name="app_update_install">Install update</string>
+    <string name="app_update_install_failed">Could not start installation. Check the install permission in Android settings and try again.</string>
 </resources>
